@@ -21,9 +21,9 @@ router.post('/register',(req, res)=>{
             })
             .catch((err)=>{
                 if(err.code === 11000){
-                    return res.json({success: false, message: "Email is already Exist"})
+                    return res.status(400).json({success: false, message: "Email is already Exist"})
                 }
-                res.json({success:false, message:"Authentication failed"})
+                res.status(401).json({success:false, message:"Authentication failed"})
             })
         }
     })
@@ -32,7 +32,7 @@ router.post('/register',(req, res)=>{
 router.post('/login',(req, res)=>{
     User.find({email: req.body.email}).exec().then((result) => {
         if(result.length < 1){
-            return res.json({success: false, message: "user not found"})
+            return res.status(404).json({success: false, message: "user not found"})
         }
         const user = result[0]
         bcrypt.compare(req.body.password, user.password, (err, ret)=>{
@@ -41,6 +41,7 @@ router.post('/login',(req, res)=>{
                     userId: user._id,
                 }
                 const token = jwt.sign(payload, SECRET_KEY)
+                res.cookie("token", token);
                 return res.json({success: true, token: token, message: "Login Successfull"})
             } else {
                 return res.json({success: false, message: "Login failed"})
@@ -79,9 +80,9 @@ router.post('/add', (req, res, next) => {
   router.delete('/task/:id', (req, res) => {
     todo.findByIdAndDelete(req.params.id).then((task) => {
         if (!task) {
-            return res.status(404).send();
+            return res.status(404);
         }
-        res.send("task deleted successfully");
+        res.status(200).json({success: true, message:"task deleted successfully"});
     }).catch((error) => {
         res.status(500).send(error);
     })
